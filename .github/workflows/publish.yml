@@ -1,0 +1,60 @@
+name: Publish Packages
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      package:
+        description: 'Which package to publish'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - cli
+          - mcp-server
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          registry-url: 'https://registry.npmjs.org'
+      
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+      
+      - name: Install dependencies
+        run: bun install
+      
+      - name: Run tests
+        run: bun test
+      
+      - name: Build CLI package
+        if: github.event.inputs.package == 'all' || github.event.inputs.package == 'cli' || github.event_name == 'push'
+        run: npm run build:cli
+      
+      - name: Build MCP Server package
+        if: github.event.inputs.package == 'all' || github.event.inputs.package == 'mcp-server' || github.event_name == 'push'
+        run: npm run build:mcp
+      
+      - name: Publish CLI package
+        if: github.event.inputs.package == 'all' || github.event.inputs.package == 'cli' || github.event_name == 'push'
+        run: npm publish --workspace=packages/cli
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      
+      - name: Publish MCP Server package
+        if: github.event.inputs.package == 'all' || github.event.inputs.package == 'mcp-server' || github.event_name == 'push'
+        run: npm publish --workspace=packages/mcp-server
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

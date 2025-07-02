@@ -1,13 +1,12 @@
 {
-  "name": "enact-cli",
+  "name": "enact-cli-monorepo",
   "version": "1.0.10",
-  "description": "Official CLI for the Enact Protocol - package, secure, and discover AI tools",
+  "description": "Monorepo for Enact Protocol CLI and MCP Server",
   "type": "module",
-  "main": "./dist/index.js",
-  "bin": {
-    "enact": "./dist/index.js",
-    "enact-mcp": "./dist/mcp-server.js"
-  },
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
   "files": [
     "dist/**/*",
     "src/web/static/**/*",
@@ -15,18 +14,20 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "bun build ./src/index.ts --outdir ./dist --target node && bun build ./src/mcp-server.ts --outdir ./dist --target node && mkdir -p ./dist/web && cp -r ./src/web/static ./dist/web/ && sed -i.bak '1{/^#!/d;}' ./dist/index.js && sed -i.bak '1{/^#!/d;}' ./dist/mcp-server.js && echo '#!/usr/bin/env node' | cat - ./dist/index.js > temp && mv temp ./dist/index.js && chmod +x ./dist/index.js && echo '#!/usr/bin/env node' | cat - ./dist/mcp-server.js > temp2 && mv temp2 ./dist/mcp-server.js && chmod +x ./dist/mcp-server.js",
-    "build:mcp": "bun build ./src/mcp-server.ts --outdir ./dist --target node",
-    "start:mcp": "node ./dist/mcp-server.js",
-    "dev:mcp": "bun run --watch src/mcp-server.ts",
-    "dev:mcp-server": "bun run --watch src/mcp-server.ts",
+    "build": "npm run build --workspace=packages/cli && npm run build --workspace=packages/mcp-server",
+    "build:cli": "npm run build --workspace=packages/cli",
+    "build:mcp": "npm run build --workspace=packages/mcp-server",
+    "publish:cli": "npm publish --workspace=packages/cli",
+    "publish:mcp": "npm publish --workspace=packages/mcp-server",
+    "publish:all": "npm run publish:cli && npm run publish:mcp",
     "test": "bun test",
     "test:watch": "bun test --watch",
     "test:cleanup": "node scripts/cleanup-test-dirs.js",
-    "prepublishOnly": "npm run build",
     "start": "bun ./dist/index.js",
     "dev": "bun run --watch src/index.ts",
     "dev:cmd": "bun src/index.ts",
+    "dev:mcp": "bun run --watch src/mcp-server.ts",
+    "dev:mcp-server": "bun run --watch src/mcp-server.ts",
     "test:coverage": "vitest --coverage",
     "lint": "bunx @biomejs/biome lint ./src",
     "format": "bunx @biomejs/biome format --write ./src",
